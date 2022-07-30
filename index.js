@@ -1,4 +1,5 @@
-const { getParameters, getParameter } = require("./Ssm.js");
+const { getParameter } = require("./aws/Ssm");
+const { putObject, putObjectLifeCycleConfiguration } = require("./aws/S3");
 const { get } = require("./Fetching.js")
 
 const ParamStoreName = "PokeUrl";
@@ -7,12 +8,17 @@ const params = {
     WithDecryption: false
 }
 
+
+const fs = require("fs");
+
 exports.handler = async (event) => {
 
     try {
+        const cat = fs.readFileSync("./public/cat1.jpg",)
+        console.log('cat: ', cat);
 
-        await getParameters({
-            Names: [ParamStoreName], WithDecryption: false
+        await getParameter({
+            Name: ParamStoreName, WithDecryption: false
         })
 
         let finalResponse = await getParameter(params)
@@ -24,7 +30,15 @@ exports.handler = async (event) => {
         });
         console.log('responseGet: ', responseGet);
 
-        return responseGet;
+
+        await putObject({
+            body: cat,
+            key: event.key
+        });
+
+        return await putObjectLifeCycleConfiguration({
+            prefix: event.key
+        });
 
     } catch (e) {
         console.log("Catch", e)
